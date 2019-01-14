@@ -1,0 +1,123 @@
+---
+title: "__Reproducible Research Course Project 1__" 
+author: "Patricia Rose Donato"
+output: html_document
+---
+
+<style type="text/css">
+    caption {
+      color: #303030;
+      font-size: 0.8em;
+      text-align: center;
+    } 
+    table{
+      border: 0.75px solid #303030;
+      font-size: 14px;
+    }
+    
+</style>
+
+```{r setup, include=FALSE, message=FALSE, warning=FALSE}
+library(knitr)
+library(tidyverse)
+library(kableExtra)
+
+opts_chunk$set(echo=TRUE, message=FALSE, warning=FALSE)
+```
+
+### **Preparing the Data**
+
+```{r preprocess, results='hide'}
+library(readr)
+activity <- read_csv("C:/Users/pdonato/Desktop/Coursera/RepData_PeerAssessment1/activity.zip")
+activity$date <- format(activity$date,"%Y %b %d")
+```
+
+### **Mean Total Number of Steps per Day**
+
+```{r item1.1}
+total_steps <- activity %>%
+  group_by(date) %>%
+  summarise(totsteps = sum(steps, na.rm=TRUE))
+
+kable(total_steps, 
+      col.names = c("Date","Total Steps"),
+      format.args = list(big.mark = ","),
+      caption = "Table 1. Total Steps per Day",
+      align = "cl") %>% 
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = F, font_size = 15) %>% 
+  column_spec(1, width = "5cm") %>%
+  column_spec(2, width = "5cm") %>%
+  row_spec(0, align = "c")
+```
+
+```{r item1.2}
+ggplot(data=total_steps, aes(x=totsteps, y=..count..)) + 
+  geom_histogram(alpha=0.8) +
+  geom_vline(xintercept=mean(total_steps$totsteps), size=1, color="darkblue") +
+  geom_vline(xintercept=median(total_steps$totsteps), size=1, color="darkred") +
+  geom_label(aes(x=median(total_steps$totsteps), y=7.5, 
+                 label=paste0("Median=",median(total_steps$totsteps)%>% format(big.mark=","))),
+            nudge_x = 3000,
+            color = "darkred",
+            show.legend = FALSE) +
+  geom_label(aes(x=mean(total_steps$totsteps), y=7.5,
+                 label=paste0("Mean=",mean(total_steps$totsteps) %>% format(big.mark=","))),
+            nudge_x = -3000,
+            color = "darkblue",
+            show.legend = FALSE) +
+  xlab("Total Steps") +
+  ylab("Count") +
+  ggtitle("Histogram of Total Steps per Day") +
+  theme(axis.text.x = element_text(vjust = 0.5,size=12),
+        text = element_text(family = "sans", color = "#303030", size = 12),
+        title = element_text(face = "bold", color = "#303030", size = 15),
+        axis.text=element_text(size=12),
+        axis.title = element_text(size=14, face="bold"),
+        plot.title = element_text(size=16, hjust = 0.5),
+        plot.subtitle = element_text(face="italic"),
+        plot.caption = element_text(hjust = 0, size=14, color ="#3A5199",face="italic"),
+        panel.background = element_rect(fill="white", color ="#D3D3D3"),
+        panel.grid.major.y = element_line(colour="#D3D3D3",linetype = "dashed"),
+        strip.text.x = element_text(size = 12))
+```
+
+```{r item1.3}
+mean <- mean(total_steps$totsteps) %>% format(big.mark=",")
+median <- median(total_steps$totsteps) %>% format(big.mark=",")
+```
+
+### **Average Daily Activity Pattern**
+```{r item2.1}
+daily_pattern <- activity %>%
+  group_by(interval) %>%
+  summarise(ave=mean(steps,na.rm=TRUE))
+
+ggplot(data=daily_pattern, aes(x=interval, y=ave)) +
+  geom_line(size=1,color="#303030",alpha=0.8) +
+  geom_point(x=daily_pattern[which.max(daily_pattern$ave),1] %>% as.numeric(),
+             y=max(daily_pattern$ave),
+             size=3, color="darkblue") +
+  geom_label(aes(x=daily_pattern[which.max(daily_pattern$ave),1] %>% as.numeric(), 
+                 y=max(daily_pattern$ave),
+                 label=paste0(max(daily_pattern$ave) %>% format(big.mark=",")," steps")),
+            nudge_x = 300,
+            color = "darkblue",
+            show.legend = FALSE) +
+  xlab("Interval") +
+  ylab("Average Steps") +
+  ggtitle("Average Daily Activity Pattern") +
+  theme(axis.text.x = element_text(vjust = 0.5,size=12),
+        text = element_text(family = "sans", color = "#303030", size = 12),
+        title = element_text(face = "bold", color = "#303030", size = 15),
+        axis.text=element_text(size=12),
+        axis.title = element_text(size=14, face="bold"),
+        plot.title = element_text(size=16, hjust = 0.5),
+        plot.subtitle = element_text(face="italic"),
+        plot.caption = element_text(hjust = 0, size=14, color ="#3A5199",face="italic"),
+        panel.background = element_rect(fill="white", color ="#D3D3D3"),
+        panel.grid.major.y = element_line(colour="#D3D3D3",linetype = "dashed"),
+        strip.text.x = element_text(size = 12))
+
+max <- daily_pattern[which.max(daily_pattern$ave),1] %>% as.numeric()
+```
