@@ -1,7 +1,9 @@
 ---
 title: "__Reproducible Research Course Project 1__" 
 author: "Patricia Rose Donato"
-output: html_document
+output:
+    html_document:
+    keep_md: true
 ---
 
 <style type="text/css">
@@ -25,7 +27,7 @@ library(kableExtra)
 opts_chunk$set(echo=TRUE, message=FALSE, warning=FALSE)
 ```
 
-### **Preparing the Data**
+### **Loading and preprocessing the data**
 
 ```{r preprocess, results='hide'}
 library(readr)
@@ -33,7 +35,7 @@ activity <- read_csv("C:/Users/pdonato/Desktop/Coursera/RepData_PeerAssessment1/
 activity$date <- format(activity$date,"%Y %b %d")
 ```
 
-### **Mean Total Number of Steps per Day**
+### **What is mean total number of steps taken per day?**
 
 ```{r item1.1}
 total_steps <- activity %>%
@@ -87,7 +89,7 @@ mean <- mean(total_steps$totsteps) %>% format(big.mark=",")
 median <- median(total_steps$totsteps) %>% format(big.mark=",")
 ```
 
-### **Average Daily Activity Pattern**
+### **What is the average daily activity pattern?**
 ```{r item2.1}
 daily_pattern <- activity %>%
   group_by(interval) %>%
@@ -118,6 +120,80 @@ ggplot(data=daily_pattern, aes(x=interval, y=ave)) +
         panel.background = element_rect(fill="white", color ="#D3D3D3"),
         panel.grid.major.y = element_line(colour="#D3D3D3",linetype = "dashed"),
         strip.text.x = element_text(size = 12))
+```
 
+```{r item2.2}
 max <- daily_pattern[which.max(daily_pattern$ave),1] %>% as.numeric()
+```
+
+### **Imputing missing values**
+
+```{r item3.1}
+missing <- sum(is.na(activity))
+```
+
+```{r item3.2}
+daily_pattern <- activity %>%
+  group_by(interval) %>%
+  summarise(ave=mean(steps,na.rm=TRUE))
+
+imputed_df <- left_join(activity,daily_pattern) %>%
+  mutate(imputed_steps = ifelse(is.na(steps),ave,steps)) %>%
+  select(date,interval,imputed_steps)
+
+imputed_df_head <- left_join(activity,daily_pattern) %>%
+  mutate(imputed_steps = ifelse(is.na(steps),ave,steps)) %>%
+  select(date,interval,imputed_steps) %>% 
+  head(10)
+
+kable(imputed_df_head, 
+      col.names = c("Date","Interval","Imputed Steps"),
+      format.args = list(big.mark = ","),
+      caption = "Table 2. First 10 Rows of Activity Data with Imputed Steps",
+      align = "ccl") %>% 
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = F, font_size = 15) %>% 
+  column_spec(1, width = "5cm") %>%
+  column_spec(2, width = "5cm") %>%
+  column_spec(3, width = "5cm") %>%
+  row_spec(0, align = "c")
+```
+
+```{r item3.3}
+imputed_total_steps <- imputed_df %>%
+  group_by(date) %>%
+  summarise(totsteps = sum(imputed_steps))
+
+ggplot(data=imputed_total_steps, aes(x=totsteps, y=..count..)) + 
+  geom_histogram(alpha=0.8) +
+  geom_vline(xintercept=mean(imputed_total_steps$totsteps), size=1, color="darkblue") +
+  geom_vline(xintercept=median(imputed_total_steps$totsteps), size=1, color="darkred") +
+  geom_label(aes(x=median(imputed_total_steps$totsteps), y=7.5, 
+                 label=paste0("Median=",median(imputed_total_steps$totsteps)%>% format(big.mark=","))),
+            nudge_x = 3000,
+            color = "darkred",
+            show.legend = FALSE) +
+  geom_label(aes(x=mean(imputed_total_steps$totsteps), y=7.5,
+                 label=paste0("Mean=",mean(imputed_total_steps$totsteps) %>% format(big.mark=","))),
+            nudge_x = -3000,
+            color = "darkblue",
+            show.legend = FALSE) +
+  xlab("Total Steps") +
+  ylab("Count") +
+  ggtitle("Histogram of Total Steps per Day") +
+  theme(axis.text.x = element_text(vjust = 0.5,size=12),
+        text = element_text(family = "sans", color = "#303030", size = 12),
+        title = element_text(face = "bold", color = "#303030", size = 15),
+        axis.text=element_text(size=12),
+        axis.title = element_text(size=14, face="bold"),
+        plot.title = element_text(size=16, hjust = 0.5),
+        plot.subtitle = element_text(face="italic"),
+        plot.caption = element_text(hjust = 0, size=14, color ="#3A5199",face="italic"),
+        panel.background = element_rect(fill="white", color ="#D3D3D3"),
+        panel.grid.major.y = element_line(colour="#D3D3D3",linetype = "dashed"),
+        strip.text.x = element_text(size = 12))
+```
+
+```{r item3.4}
+imputed_mean <- mean(imputed_total_steps$totsteps) %>% format(big.mark=",")
+imputed_median <- median(imputed_total_steps$totsteps) %>% format(big.mark=",")
 ```
