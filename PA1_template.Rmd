@@ -235,20 +235,21 @@ imputed_daily_pattern <- rbind(
     filter(weekday == 1) %>%
     group_by(interval) %>%
     summarise(ave=mean(imputed_steps)) %>%
-    mutate(weekday=1),
+    mutate(weekday="Weekday"),
   imputed_df %>%
     filter(weekday == 0) %>%
     group_by(interval) %>%
     summarise(ave=mean(imputed_steps)) %>%
-    mutate(weekday=0)
+    mutate(weekday="Weekend")
 )
 
-ggplot(data=imputed_daily_pattern, aes(x=interval, y=ave, color=as.factor(weekday))) +
-  geom_line(size=1.5,alpha=0.8) +
+ggplot(data=imputed_daily_pattern, aes(x=interval, y=ave)) +
+  geom_line(size=1.5,alpha=0.8,color="#303030") +
   scale_color_manual(name="",labels=c("Weekend","Weekday"),values=c("darkblue", "darkred")) +
   xlab("Interval") +
   ylab("Average Steps") +
   ggtitle("Average Daily Activity Pattern (Imputed)") +
+  facet_wrap(~as.factor(weekday),nrow=2) +
   theme(axis.text.x = element_text(vjust = 0.5,size=20),
         text = element_text(family = "sans", color = "#303030", size = 20),
         title = element_text(face = "bold", color = "#303030", size = 23),
